@@ -18,26 +18,32 @@ class MainActivity : ComponentActivity() {
         setContent {
             TriviaTheme {
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    Greeting("Android")
-                }
+               MyApp {
+
+               }
             }
         }
     }
 }
-
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    TriviaTheme {
-        Greeting("Android")
+fun MyApp(content:@Composable () ->Unit){
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colors.background
+    ) {
     }
 }
+
+//
+//@Composable
+//fun Greeting(name: String) {
+//    Text(text = "Hello $name!")
+//}
+
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    TriviaTheme {
+//        Greeting("Android")
+//    }
+//}
