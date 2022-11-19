@@ -1,38 +1,55 @@
 package com.github.ebrahimi16153.trivia
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.github.ebrahimi16153.trivia.ui.theme.TriviaTheme
+import com.github.ebrahimi16153.trivia.viewmodel.QuestionsViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TriviaTheme {
-                // A surface container using the 'background' color from the theme
-               MyApp {
 
-               }
-            }
+            // A surface container using the 'background' color from the theme
+            MyApp()
+
         }
     }
 }
+
 @Composable
-fun MyApp(content:@Composable () ->Unit){
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colors.background
-    ) {
+fun MyApp(viewModel: QuestionsViewModel = hiltViewModel()) {
+    TriviaTheme {
+        QuestionData(viewModel = viewModel)
     }
+
 }
+
+@Composable
+fun QuestionData(viewModel: QuestionsViewModel) {
+    val question = viewModel.data.value.data?.toMutableList()
+
+    if (viewModel.data.value.isLoading == true) {
+
+        Log.d("Loading...", "LOADING >>>>")
+
+    } else {
+        Log.d("loading...", "LOADING Successfully >>>>")
+        question?.forEach {
+            Log.d("Result", it.question.toString())
+        }
+
+    }
+
+
+}
+
 
 //
 //@Composable

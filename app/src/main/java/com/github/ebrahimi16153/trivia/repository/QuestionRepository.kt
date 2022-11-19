@@ -3,7 +3,7 @@ package com.github.ebrahimi16153.trivia.repository
 import android.util.Log
 import com.github.ebrahimi16153.trivia.model.QuestionItem
 import com.github.ebrahimi16153.trivia.network.QuestionApi
-import com.github.ebrahimi16153.trivia.util.data.DataOrException
+import com.github.ebrahimi16153.trivia.data.DataOrException
 import javax.inject.Inject
 
 class QuestionRepository @Inject constructor(private val api:QuestionApi) {
