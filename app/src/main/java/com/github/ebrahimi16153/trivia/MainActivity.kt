@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.github.ebrahimi16153.trivia.screens.TriviaHome
 import com.github.ebrahimi16153.trivia.ui.theme.TriviaTheme
 import com.github.ebrahimi16153.trivia.viewmodel.QuestionsViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,38 +18,17 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             // A surface container using the 'background' color from the theme
-            MyApp()
+            TriviaTheme {
+
+                TriviaHome()
+            }
 
         }
     }
 }
 
-@Composable
-fun MyApp(viewModel: QuestionsViewModel = hiltViewModel()) {
-    TriviaTheme {
-        QuestionData(viewModel = viewModel)
-    }
-
-}
-
-@Composable
-fun QuestionData(viewModel: QuestionsViewModel) {
-    val question = viewModel.data.value.data?.toMutableList()
-
-    if (viewModel.data.value.isLoading == true) {
-
-        Log.d("Loading...", "LOADING >>>>")
-
-    } else {
-        Log.d("loading...", "LOADING Successfully >>>>")
-        question?.forEach {
-            Log.d("Result", it.question.toString())
-        }
-
-    }
 
 
-}
 
 
 //
