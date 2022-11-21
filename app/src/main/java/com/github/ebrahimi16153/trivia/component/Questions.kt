@@ -26,10 +26,3 @@ fun Questions(viewModel: QuestionsViewModel) {
     }
 }
 
-
-@Composable
-fun QuestionsDisplay (){
-    Surface() {
-
-    }
-}
