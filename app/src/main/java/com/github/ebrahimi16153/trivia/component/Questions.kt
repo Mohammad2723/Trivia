@@ -35,6 +35,7 @@ import com.github.ebrahimi16153.trivia.viewmodel.QuestionsViewModel
 @Composable
 fun Questions(viewModel: QuestionsViewModel) {
     val question = viewModel.data.value.data?.toMutableList()
+    val questionSize: Int? = viewModel.data.value.data?.size
 
     if (viewModel.data.value.isLoading == true) {
         CircularProgressIndicator(color = Color(0xFF007AFF))
@@ -46,7 +47,7 @@ fun Questions(viewModel: QuestionsViewModel) {
 //            Log.d("Result", it.question.toString())
 //            
 //        }
-        question?.first()?.let { QuestionDisplay(question = it) }
+        question?.first()?.let { QuestionDisplay(question = it, questionSize) }
 
     }
 }
@@ -58,6 +59,7 @@ fun QuestionDisplay(
     question: QuestionItem,
 //    questionIndex: MutableState<Int>,
 //    viewModel: QuestionsViewModel,
+    questionSize: Int?,
     onNextClick: (Int) -> Unit = {}
 ) {
 
@@ -86,77 +88,125 @@ fun QuestionDisplay(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            QuestionTracker()
+
+
+            QuestionTracker(outOff = questionSize)
 //            DottedLine( )
             Line()
 
-            Column(modifier = Modifier.padding(top = 20.dp)) {
-                question.question?.let {
-                    Text(
-                        text = it,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(0.3f)
-                            .align(alignment = Alignment.Start),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 22.sp,
-                        color = myColor().text
-                    )
-                }
-            }
+            QuestionContent(question)
 
             // list of radio button -> choices
-            choiceState?.forEachIndexed { index, answerTex ->
+            AnswerContent(choiceState, answerState, updateAnswer, correctAnswerState)
+            // end choices
+        }
+    }
+}
 
-                Row(
-                    modifier = Modifier
-                        .padding(3.dp)
-                        .fillMaxWidth()
-                        .height(45.dp)
-                        .border(
-                            width = 4.dp,
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    myColor().primary,
-                                    myColor().fail
-                                )
-                            ), shape = RoundedCornerShape(15.dp)
+@Composable
+fun NextButton(onClick: () -> Unit) {
+    Button(onClick = { onClick.invoke() },modifier = Modifier.padding(3.dp) ) {
+             Text(text = "Next")
+    }
+
+
+}
+
+@Composable
+private fun AnswerContent(
+    choiceState: MutableList<String?>?,
+    answerState: MutableState<Int?>,
+    updateAnswer: (Int) -> Unit,
+    correctAnswerState: MutableState<Boolean?>
+) {
+    choiceState?.forEachIndexed { index, answerTex ->
+
+        Row(
+            modifier = Modifier
+                .padding(3.dp)
+                .fillMaxWidth()
+                .height(45.dp)
+                .border(
+                    width = 4.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            myColor().primary,
+                            myColor().fail
                         )
-                        .clip(
-                            RoundedCornerShape(
-                                topStartPercent = 50,
-                                topEndPercent = 50,
-                                bottomEndPercent = 50,
-                                bottomStartPercent = 50
-                            )
-                        )
-                        .background(Color.Transparent),
-                    verticalAlignment = Alignment.CenterVertically
+                    ), shape = RoundedCornerShape(15.dp)
+                )
+                .clip(
+                    RoundedCornerShape(
+                        topStartPercent = 50,
+                        topEndPercent = 50,
+                        bottomEndPercent = 50,
+                        bottomStartPercent = 50
+                    )
+                )
+                .background(Color.Transparent),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = (answerState.value == index),
+                onClick = { updateAnswer(index) },
+                modifier = Modifier.padding(start = 16.dp),
+                colors = RadioButtonDefaults
+                    .colors(
+                        selectedColor =
+                        if (correctAnswerState.value == true && index == answerState.value) {
+                            myColor().successes
+                        } else {
+                            myColor().fail
+                        }
+                    )
+            )
+            val annotatedString = buildAnnotatedString {
+                withStyle(
+                    style = SpanStyle(
+                        fontWeight = FontWeight.Light,
+                        color = if (correctAnswerState.value == true
+                            && index == answerState.value
+                        ) {
+                            myColor().successes
+                        } else if (correctAnswerState.value == false && index == answerState.value) {
+                            myColor().fail
+                        } else {
+                            myColor().text
+                        }
+                    )
                 ) {
-                    RadioButton(
-                        selected = (answerState.value == index),
-                        onClick = { updateAnswer(index) },
-                        modifier = Modifier.padding(start = 16.dp),
-                        colors = RadioButtonDefaults
-                            .colors(
-                                selectedColor =
-                                if (correctAnswerState.value == true && index == answerState.value) {
-                                    myColor().successes
-                                } else {
-                                    myColor().fail
-                                }))
-                    Text(text = answerTex!!)
-
+                    append(answerTex!!)
                 }
             }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(text = annotatedString)
+
+        }
+    }
+}
+
+@Composable
+private fun QuestionContent(question: QuestionItem) {
+    Column(modifier = Modifier.padding(top = 20.dp)) {
+        question.question?.let {
+            Text(
+                text = it,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.3f)
+                    .align(alignment = Alignment.Start),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 22.sp,
+                color = myColor().text
+            )
         }
     }
 }
 
 //@Preview
 @Composable
-fun QuestionTracker(counter: Int = 10, outOff: Int = 100) {
+fun QuestionTracker(counter: Int = 10, outOff: Int? = 100) {
 
     Text(text = buildAnnotatedString {
         withStyle(style = ParagraphStyle(textIndent = TextIndent.None)) {
