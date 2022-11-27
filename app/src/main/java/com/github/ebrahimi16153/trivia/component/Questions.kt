@@ -1,16 +1,13 @@
 package com.github.ebrahimi16153.trivia.component
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -34,20 +31,46 @@ import com.github.ebrahimi16153.trivia.viewmodel.QuestionsViewModel
 
 @Composable
 fun Questions(viewModel: QuestionsViewModel) {
-    val question = viewModel.data.value.data?.toMutableList()
+    val questions = viewModel.data.value.data?.toMutableList()
     val questionSize: Int? = viewModel.data.value.data?.size
+    val questionIndex = remember { mutableStateOf(0) }
 
     if (viewModel.data.value.isLoading == true) {
-        CircularProgressIndicator(color = Color(0xFF007AFF))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(myColor().background),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+
+            ) {
+            CircularProgressIndicator(color = myColor().primary)
+        }
 
 
     } else {
-        Log.d("loading...", "LOADING Successfully >>>>")
+        val question = try {
+            questions?.get(questionIndex.value)
+        } catch (e: Exception) {
+            null
+        }
+
+//        Log.d("loading...", "LOADING Successfully >>>>")
 //        question?.forEach {
 //            Log.d("Result", it.question.toString())
 //            
 //        }
-        question?.first()?.let { QuestionDisplay(question = it, questionSize) }
+
+        if (questions != null) {
+            QuestionDisplay(
+                question = question!!,
+                questionIndex = questionIndex,
+                viewModel = viewModel,
+                questionSize = questionSize
+            ) {
+                questionIndex.value = questionIndex.value + 1
+            }
+        }
 
     }
 }
@@ -57,25 +80,25 @@ fun Questions(viewModel: QuestionsViewModel) {
 @Composable
 fun QuestionDisplay(
     question: QuestionItem,
-//    questionIndex: MutableState<Int>,
-//    viewModel: QuestionsViewModel,
+    questionIndex: MutableState<Int>,
+    viewModel: QuestionsViewModel,
     questionSize: Int?,
-    onNextClick: (Int) -> Unit = {}
+    onNextClick: (Int) -> Unit
 ) {
-
-    val choiceState = remember {
-        question.choices?.toMutableList()
+    val choseState = remember(question) {
+        question.choices?.toMutableStateList()
     }
-    val answerState = remember {
+
+    val answerState = remember(question) {
         mutableStateOf<Int?>(null)
     }
-    val correctAnswerState = remember {
+    val correctAnswerState = remember(question) {
         mutableStateOf<Boolean?>(null)
     }
     val updateAnswer: (Int) -> Unit = remember(question) {
         {
             answerState.value = it
-            correctAnswerState.value = choiceState?.get(it) == question.answer
+            correctAnswerState.value = choseState?.get(it) == question.answer
         }
     }
 
@@ -86,46 +109,53 @@ fun QuestionDisplay(
         Column(
             modifier = Modifier.padding(all = 20.dp),
             verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
 
-            QuestionTracker(outOff = questionSize)
-//            DottedLine( )
-            Line()
-
+            QuestionTracker(counter = questionIndex.value + 1, outOff = questionSize)
+            DottedLine( )
             QuestionContent(question)
-
             // list of radio button -> choices
-            AnswerContent(choiceState, answerState, updateAnswer, correctAnswerState)
-            // end choices
+//            AnswerContent(choiceState, answerState, updateAnswer, correctAnswerState)
+            AnswerContent(choseState, answerState, updateAnswer, correctAnswerState)
+
+            NextButton(onNextClick, questionIndex)
         }
     }
+
+
 }
 
 @Composable
-fun NextButton(onClick: () -> Unit) {
-    Button(onClick = { onClick.invoke() },modifier = Modifier.padding(3.dp) ) {
-             Text(text = "Next")
+private fun NextButton(
+    onNextClick: (Int) -> Unit,
+    questionIndex: MutableState<Int>
+) {
+    Button(
+        onClick = { onNextClick(questionIndex.value) },
+        modifier = Modifier.padding(3.dp),
+        colors = ButtonDefaults.buttonColors(backgroundColor = myColor().primary),
+        shape = RoundedCornerShape(50)
+    ) {
+        Text(text = "Next", color = Color(0xFFEFEFEF))
+
     }
-
-
 }
 
 @Composable
 private fun AnswerContent(
-    choiceState: MutableList<String?>?,
+    choseState: SnapshotStateList<String?>?,
     answerState: MutableState<Int?>,
     updateAnswer: (Int) -> Unit,
     correctAnswerState: MutableState<Boolean?>
 ) {
-    choiceState?.forEachIndexed { index, answerTex ->
-
+    choseState?.forEachIndexed { index, answerText ->
         Row(
             modifier = Modifier
                 .padding(3.dp)
                 .fillMaxWidth()
-                .height(45.dp)
+                .height(55.dp)
                 .border(
                     width = 4.dp,
                     brush = Brush.linearGradient(
@@ -133,7 +163,8 @@ private fun AnswerContent(
                             myColor().primary,
                             myColor().fail
                         )
-                    ), shape = RoundedCornerShape(15.dp)
+                    ),
+                    shape = RoundedCornerShape(15.dp)
                 )
                 .clip(
                     RoundedCornerShape(
@@ -148,12 +179,13 @@ private fun AnswerContent(
         ) {
             RadioButton(
                 selected = (answerState.value == index),
-                onClick = { updateAnswer(index) },
+                onClick = {
+                    updateAnswer(index)
+                },
                 modifier = Modifier.padding(start = 16.dp),
                 colors = RadioButtonDefaults
                     .colors(
-                        selectedColor =
-                        if (correctAnswerState.value == true && index == answerState.value) {
+                        selectedColor = if (correctAnswerState.value == true && index == answerState.value) {
                             myColor().successes
                         } else {
                             myColor().fail
@@ -164,26 +196,36 @@ private fun AnswerContent(
                 withStyle(
                     style = SpanStyle(
                         fontWeight = FontWeight.Light,
-                        color = if (correctAnswerState.value == true
-                            && index == answerState.value
-                        ) {
-                            myColor().successes
+                        color = if (correctAnswerState.value == true && index == answerState.value) {
+                            Color.Green
                         } else if (correctAnswerState.value == false && index == answerState.value) {
                             myColor().fail
                         } else {
-                            myColor().text
-                        }
+                            myColor().successes
+                        },
+                        fontSize = 17.sp
                     )
                 ) {
-                    append(answerTex!!)
+
+                    append(answerText!!)
                 }
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = annotatedString)
+            Text(text = annotatedString, modifier = Modifier.padding(6.dp))
 
         }
     }
 }
+
+
+//@Composable
+//private fun AnswerContent(
+//    choiceState: MutableList<String?>?,
+//    answerState: MutableState<Int?>,
+//    updateAnswer: (Int) -> Unit,
+//    correctAnswerState: MutableState<Boolean?>
+//) {
+//
+//}
 
 @Composable
 private fun QuestionContent(question: QuestionItem) {
@@ -231,7 +273,6 @@ fun QuestionTracker(counter: Int = 10, outOff: Int? = 100) {
             }
         }
     }, modifier = Modifier.padding(20.dp))
-
 }
 
 @Composable
@@ -248,16 +289,4 @@ fun DottedLine(pathEffect: PathEffect = PathEffect.dashPathEffect(floatArrayOf(1
         )
     })
 
-}
-
-@Composable
-fun Line() {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(0.5.dp)
-            .alpha(0.7f), color = myColor().text
-    ) {
-
-    }
 }
