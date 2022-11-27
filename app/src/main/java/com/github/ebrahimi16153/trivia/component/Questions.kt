@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.ebrahimi16153.trivia.model.QuestionItem
@@ -111,8 +111,7 @@ fun QuestionDisplay(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-
+            if (questionIndex.value+1 > 3) ShowProgress(questionIndex.value)
             QuestionTracker(counter = questionIndex.value + 1, outOff = questionSize)
             DottedLine( )
             QuestionContent(question)
@@ -195,15 +194,13 @@ private fun AnswerContent(
             val annotatedString = buildAnnotatedString {
                 withStyle(
                     style = SpanStyle(
-                        fontWeight = FontWeight.Light,
                         color = if (correctAnswerState.value == true && index == answerState.value) {
-                            Color.Green
+                            myColor().successes
                         } else if (correctAnswerState.value == false && index == answerState.value) {
                             myColor().fail
                         } else {
-                            myColor().successes
+                            myColor().text
                         },
-                        fontSize = 17.sp
                     )
                 ) {
 
@@ -289,4 +286,59 @@ fun DottedLine(pathEffect: PathEffect = PathEffect.dashPathEffect(floatArrayOf(1
         )
     })
 
+}
+
+
+@Preview
+@Composable
+fun ShowProgress(score: Int = 12) {
+    val progress  by remember(score) {
+              mutableStateOf(score* 0.005f)
+    }
+    Row(
+        modifier = Modifier
+            .padding(3.dp)
+            .fillMaxWidth()
+            .height(45.dp)
+            .border(
+                width = 4.dp, brush = Brush.linearGradient(
+                    colors =
+                    listOf(myColor().primary, myColor().successes)
+                ), shape = RoundedCornerShape(34.dp)
+            )
+            .clip(
+                RoundedCornerShape(
+                    topEndPercent = 50,
+                    topStartPercent = 50,
+                    bottomEndPercent = 50,
+                    bottomStartPercent = 50
+                )
+            )
+            .background(color = Color.Transparent),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            onClick = {},
+            Modifier
+                .fillMaxWidth(progress)
+                .height(46.dp)
+                .background(
+                    brush = Brush.linearGradient(
+                        listOf(
+                            myColor().successes,
+                            myColor().fail
+                        )
+                    )
+                ),
+            contentPadding = PaddingValues(1.dp),
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+//            enabled = false,
+            elevation = null
+
+        ) {
+
+
+        }
+
+    }
 }
