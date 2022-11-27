@@ -65,7 +65,6 @@ fun Questions(viewModel: QuestionsViewModel) {
             QuestionDisplay(
                 question = question!!,
                 questionIndex = questionIndex,
-                viewModel = viewModel,
                 questionSize = questionSize
             ) {
                 questionIndex.value = questionIndex.value + 1
@@ -81,7 +80,6 @@ fun Questions(viewModel: QuestionsViewModel) {
 fun QuestionDisplay(
     question: QuestionItem,
     questionIndex: MutableState<Int>,
-    viewModel: QuestionsViewModel,
     questionSize: Int?,
     onNextClick: (Int) -> Unit
 ) {
